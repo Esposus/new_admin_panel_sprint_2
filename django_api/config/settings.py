@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 include(
     'components/apps.py',
-    'components/auth_password_validators',
+    'components/auth_password_validators.py',
     'components/database.py',
     'components/middlewares.py',
     'components/templates.py',

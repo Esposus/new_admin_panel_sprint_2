@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.10.2-buster
+FROM python:3.10
 
 WORKDIR /opt/app
 
@@ -8,6 +8,7 @@ ENV UWSGI_PROCESSES 1
 ENV UWSGI_THREADS 16
 ENV UWSGI_HARAKIRI 240
 ENV DJANGO_SETTINGS_MODULE 'config.settings'
+ENV PATH="/opt/app/.local/bin:${PATH}"
 
 COPY run_uwsgi.sh run_uwsgi.sh
 COPY requirements.txt requirements.txt
@@ -16,10 +17,11 @@ COPY uwsgi/uwsgi.ini uwsgi.ini
 RUN  mkdir -p /opt/app/static/ \
      && mkdir -p /opt/app/media/ \
      && pip install --upgrade pip \
-     && pip install -r requirements.txt --no-cache-dir
+     && pip install -r requirements.txt --no-cache-dir \
+     && pip install uwsgi
 
 COPY . .
 
 EXPOSE 8000
 
-ENTRYPOINT ["uwsgi", "--ini", "uwsgi.ini"]
+ENTRYPOINT ["sh", "-c", "uwsgi", "--ini", "uwsgi.ini"]
