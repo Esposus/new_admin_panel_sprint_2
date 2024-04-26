@@ -1,0 +1,4 @@
+default:
+  - {route: "/static", dest: "/web/static", "assets": true}
+  - {route: "/media", dest: "/web/media", assets: true }
+

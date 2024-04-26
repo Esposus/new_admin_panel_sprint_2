@@ -4,6 +4,7 @@ services:
 
   db:
     image: postgres:12.0-alpine
+    container_name: postgres_t
     volumes:
       - ./schema_design/movies_database.sql:/docker-entrypoint-initdb.d/movies_database.sql
       - postgres_data:/var/lib/postgresql/data
@@ -11,11 +12,14 @@ services:
       - ./.env
     ports:
       - "5434:5432"
+    labels:
+      reproxy.enabled: false
 
   service:
     build:
       context: ./django_api
       dockerfile: Dockerfile
+    container_name: service_t
     restart: always
     volumes:
       - static_value:/opt/app/static/
@@ -29,32 +33,42 @@ services:
       - UWSGI_PROCESSES=1
       - UWSGI_THREADS=16
       - UWSGI_HARAKIRI=240
-#    ports:
-#      - "8000:8000"  # Перенаправляем порт 8000 контейнера на порт хоста
+    labels:
+        reproxy.server: '*'
+        reproxy.route: '^/(.*)'
+        reproxy.dest: '/$$1'
 
-  nginx:
-    image: nginx:latest
-    restart: always
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/configs/site.conf:/etc/nginx/conf.d/site.conf:ro
-      - static_value:/opt/app/static/
-      - media_value:/opt/app/media/
-    depends_on:
-      - service
+  reproxy:
+    image: umputun/reproxy:master
+    container_name: reproxy
+    hostname: reproxy
     ports:
-      - "80:80"
-
-  swagger:
-    image: swaggerapi/swagger-ui
+      - "80:8080"
     volumes:
-      - ./docs/openapi.yaml:/swagger.yaml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./reproxy.yml:/reproxy.yml
+      - static_value:/web/static
+      - media_value:/web/media
     environment:
-      SWAGGER_JSON: /swagger.yaml
-    depends_on:
-      - nginx
-    ports:
-      - "8082:8080"
+      - TZ=Europe/Moscow
+      - LISTEN=0.0.0.0:8080
+      - DOCKER_ENABLED=true
+      - DOCKER_AUTO=true
+      - DEBUG=true
+      - FILE_ENABLED=true
+      - FILE_NAME=/reproxy.yml
+
+#
+#  swagger:
+#    image: swaggerapi/swagger-ui
+#    volumes:
+#      - ./docs/openapi.yaml:/swagger.yaml
+#    environment:
+#      SWAGGER_JSON: /swagger.yaml
+#    depends_on:
+#      - nginx
+#    ports:
+#      - "8082:8080"
 
 volumes:
   postgres_data:
