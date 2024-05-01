@@ -78,6 +78,12 @@ class GenreFilmwork(UUIDMixin):
 
     class Meta:
         db_table = "content\".\"genre_film_work"
+        constraints = [
+            models.constraints.UniqueConstraint(
+                fields=['film_work', 'genre'],
+                name='film_work_genre_idx'
+            )
+        ]
 
 
 class PersonFilmwork(UUIDMixin):
@@ -93,6 +99,12 @@ class PersonFilmwork(UUIDMixin):
 
     class Meta:
         db_table = "content\".\"person_film_work"
+        constraints = [
+            models.constraints.UniqueConstraint(
+                fields=['film_work', 'person', 'role'],
+                name='film_work_person_role_idx'
+            )
+        ]
         indexes = [
             models.Index(fields=['film_work_id', 'person_id'],
                          name='film_work_person_idx')]
